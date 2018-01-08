@@ -321,6 +321,6 @@ func imageURL(path ...string) (string, error) {
 		return "", err
 	}
 
-	url := "http://localhost:4340/image/?path=" + encPath
+	url := fmt.Sprintf("http://localhost:%d/image/?path=%s", *port, encPath)
 	return url, nil
 }

@@ -22,6 +22,7 @@ var (
 	AppName string
 	BuiltAt string
 	debug   = flag.Bool("d", false, "enables the debug mode")
+	port    = flag.Int("p", 4340, "server port")
 	wnd     *astilectron.Window
 	srv     *http.Server
 )
@@ -45,7 +46,7 @@ func main() {
 		OnWait: func(_ *astilectron.Astilectron, w *astilectron.Window, _ *astilectron.Menu, _ *astilectron.Tray, _ *astilectron.Menu) error {
 			wnd = w
 			// start http server
-			runServer(4340)
+			runServer()
 			return nil
 		},
 		MessageHandler: apiEventHandler,
@@ -68,11 +69,11 @@ func main() {
 	}
 }
 
-func runServer(port int) {
+func runServer() {
 	http.HandleFunc("/image/", imageHandler)
 	http.Handle("/", http.NotFoundHandler())
 
-	addr := fmt.Sprintf("localhost:%d", port)
+	addr := fmt.Sprintf("localhost:%d", *port)
 	srv = &http.Server{Addr: addr}
 	go func() {
 		astilog.Debugf("start web server [port:%d]", addr)
