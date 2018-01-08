@@ -122,23 +122,20 @@ func openImageFile(w *astilectron.Window, path string) (err error) {
 }
 
 func openArchiveFile(w *astilectron.Window, paths ...string) error {
-	if len(paths) == 0 {
-		return fmt.Errorf("want archive path")
-	}
+	var path string
+	path, paths = paths[0], paths[1:]
 
-	ext := filepath.Ext(paths[0])
+	ext := filepath.Ext(path)
 	mod, err := module.GetArchiveModule(ext)
 	if err != nil {
 		return fmt.Errorf("not support archive file type %s", ext)
 	}
-
-	if err = mod.Open(paths[0]); err != nil {
+	if err = mod.Open(path); err != nil {
 		return err
 	}
 	defer mod.Close()
 
-	vpath := strings.Join(paths[1:], "/")
-	infos := mod.ReadArchive(vpath)
+	infos := mod.ReadArchive(strings.Join(paths, "/"))
 	sort.Slice(infos, func(i, j int) bool {
 		same := infos[i].IsDir() == infos[j].IsDir()
 		if same {
@@ -150,16 +147,15 @@ func openArchiveFile(w *astilectron.Window, paths ...string) error {
 	})
 
 	parentPaths := make([]string, 0)
-	if len(paths) == 1 {
-		parentPaths = append(parentPaths, filepath.Dir(paths[0]))
+	if len(paths) == 0 {
+		parentPaths = append(parentPaths, filepath.Dir(path))
 	} else {
-		parentPaths = append(parentPaths, paths[0])
-		vpath := strings.Join(paths[1:len(paths)-1], "/")
+		parentPaths = append(parentPaths, path)
+		vpath := strings.Join(paths[:len(paths)-1], "/")
 		if len(vpath) > 0 {
 			parentPaths = append(parentPaths, vpath)
 		}
 	}
-	fmt.Println(parentPaths)
 	parentDir, err := encodeStringArray(parentPaths...)
 	if err != nil {
 		return err
@@ -173,21 +169,22 @@ func openArchiveFile(w *astilectron.Window, paths ...string) error {
 		},
 	}
 
-	exts := module.SupportImageType()
+	imgexts := module.SupportImageType()
+
 	for _, info := range infos {
 		name := info.Name()
 		url := ""
 		typ := "dir"
 
 		// TODO: support inner archive path
-		fullpaths := []string{paths[0], name}
-		if len(paths) > 1 {
-			fullpaths[1] = strings.Join(paths[1:], "/") + "/" + name
+		fullpaths := []string{path, name}
+		if len(paths) > 0 {
+			fullpaths[1] = strings.Join(paths, "/") + "/" + name
 		}
 
 		if info.IsDir() == false {
 			ext := filepath.Ext(name)
-			if slice.Includes(exts, ext) == false {
+			if slice.Includes(imgexts, ext) == false {
 				continue
 			}
 
@@ -237,9 +234,6 @@ func setCurrentFiles(w *astilectron.Window, dir string) error {
 		return infos[i].IsDir()
 	})
 
-	imgexts := module.SupportImageType()
-	archexts := module.SupportArchiveType()
-
 	parentDir, err := encodeStringArray(filepath.Dir(dir))
 	if err != nil {
 		return err
@@ -252,6 +246,9 @@ func setCurrentFiles(w *astilectron.Window, dir string) error {
 			Type: "dir",
 		},
 	}
+
+	imgexts := module.SupportImageType()
+	archexts := module.SupportArchiveType()
 
 	for _, info := range infos {
 		name := info.Name()
