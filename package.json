@@ -1,0 +1,20 @@
+{
+  "name": "imgview",
+  "version": "0.0.1",
+  "description": "",
+  "scripts": {
+    "build:assets": "cpx \"./resources/**/*.html\" ./output/windows-amd64/resources",
+    "build:go": "go build && cpx *.exe ./output/windows-amd64",
+    "build:tsc": "tsc && cpx \"./resources/**/*.js\" ./output/windows-amd64/resources",
+    "build:css": "node-sass -r -o resources resources && cpx \"./resources/**/*.css\" ./output/windows-amd64/resources",
+    "start": "cd ./output/windows-amd64 && imgview.exe -d",
+    "pack": "astilectron-bundler.exe -v"
+  },
+  "author": "hidez8891",
+  "license": "MIT",
+  "devDependencies": {
+    "cpx": "^1.5.0",
+    "node-sass": "^4.7.2",
+    "typescript": "^2.6.2"
+  }
+}
