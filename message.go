@@ -24,18 +24,21 @@ type fileInfo struct {
 }
 
 func apiEventHandler(w *astilectron.Window, m bootstrap.MessageIn) (payload interface{}, err error) {
+	if len(m.Payload) == 0 {
+		payload = "API want file/archive/directory path"
+		return
+	}
+
+	// decode payload
+	var path string
+	if err = json.Unmarshal(m.Payload, &path); err != nil {
+		payload = err.Error()
+		return
+	}
+
+	// dispatch: single path event
 	switch m.Name {
 	case "open-file":
-		var path string
-		if len(m.Payload) == 0 {
-			payload = "API want open file path"
-			return
-		}
-		if err = json.Unmarshal(m.Payload, &path); err != nil {
-			payload = err.Error()
-			return
-		}
-
 		if err = openImageFile(w, path); err != nil {
 			payload = err.Error()
 			return
@@ -47,81 +50,50 @@ func apiEventHandler(w *astilectron.Window, m bootstrap.MessageIn) (payload inte
 			return
 		}
 		return
+	}
 
-	case "open-archive":
-		if len(m.Payload) == 0 {
-			payload = "API want open archive file path"
-			return
-		}
-
-		var encPath string
-		if err = json.Unmarshal(m.Payload, &encPath); err != nil {
-			payload = err.Error()
-			return
-		}
-
-		var paths []string
-		paths, err = decodeStringArray(encPath)
-		if err != nil {
-			payload = err.Error()
-			return
-		}
-
-		if len(paths) == 1 {
-			if err = openArchiveFile(w, paths[0]); err != nil {
-				payload = err.Error()
-				return
-			}
-		} else {
-			// archive file
-		}
-		return
-
-	case "change-directory":
-		if len(m.Payload) == 0 {
-			payload = "API want change directory path"
-			return
-		}
-
-		var encPath string
-		if err = json.Unmarshal(m.Payload, &encPath); err != nil {
-			payload = err.Error()
-			return
-		}
-
-		var paths []string
-		paths, err = decodeStringArray(encPath)
-		if err != nil {
-			payload = err.Error()
-			return
-		}
-
-		if len(paths) == 1 {
-			var stat os.FileInfo
-			if stat, err = os.Stat(paths[0]); err != nil {
-				payload = err.Error()
-				return
-			}
-
-			if stat.IsDir() {
-				if err = setCurrentFiles(w, paths[0]); err != nil {
-					payload = err.Error()
-					return
-				}
-			} else {
-				if err = openArchiveFile(w, paths[0]); err != nil {
-					payload = err.Error()
-					return
-				}
-			}
-		} else {
-			if err = openArchiveFile(w, paths...); err != nil {
-				payload = err.Error()
-				return
-			}
-		}
+	// decode path array
+	var paths []string
+	paths, err = decodeStringArray(path)
+	if err != nil {
+		payload = err.Error()
 		return
 	}
+
+	// dispatch: path array event
+	switch m.Name {
+	case "open-archive":
+		if len(paths) == 1 {
+			// archive file
+			err = openArchiveFile(w, paths[0])
+		} else {
+			// archive into archive file
+			err = fmt.Errorf("UnSupport archive into archive file")
+		}
+		break
+
+	case "change-directory":
+		var stat os.FileInfo
+		if stat, err = os.Stat(paths[0]); err != nil {
+			payload = err.Error()
+			return
+		}
+
+		if len(paths) == 1 && stat.IsDir() {
+			// directory
+			err = setCurrentFiles(w, paths[0])
+		} else {
+			// directory into archive
+			err = openArchiveFile(w, paths...)
+		}
+		break
+	}
+
+	if err != nil {
+		payload = err.Error()
+		return
+	}
+
 	return
 }
 
