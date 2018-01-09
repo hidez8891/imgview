@@ -24,18 +24,21 @@ type fileInfo struct {
 }
 
 func apiEventHandler(w *astilectron.Window, m bootstrap.MessageIn) (payload interface{}, err error) {
+	if len(m.Payload) == 0 {
+		payload = "API want file/archive/directory path"
+		return
+	}
+
+	// decode payload
+	var path string
+	if err = json.Unmarshal(m.Payload, &path); err != nil {
+		payload = err.Error()
+		return
+	}
+
+	// dispatch: single path event
 	switch m.Name {
 	case "open-file":
-		var path string
-		if len(m.Payload) == 0 {
-			payload = "API want open file path"
-			return
-		}
-		if err = json.Unmarshal(m.Payload, &path); err != nil {
-			payload = err.Error()
-			return
-		}
-
 		if err = openImageFile(w, path); err != nil {
 			payload = err.Error()
 			return
@@ -47,81 +50,50 @@ func apiEventHandler(w *astilectron.Window, m bootstrap.MessageIn) (payload inte
 			return
 		}
 		return
+	}
 
-	case "open-archive":
-		if len(m.Payload) == 0 {
-			payload = "API want open archive file path"
-			return
-		}
-
-		var encPath string
-		if err = json.Unmarshal(m.Payload, &encPath); err != nil {
-			payload = err.Error()
-			return
-		}
-
-		var paths []string
-		paths, err = decodeStringArray(encPath)
-		if err != nil {
-			payload = err.Error()
-			return
-		}
-
-		if len(paths) == 1 {
-			if err = openArchiveFile(w, paths[0]); err != nil {
-				payload = err.Error()
-				return
-			}
-		} else {
-			// archive file
-		}
-		return
-
-	case "change-directory":
-		if len(m.Payload) == 0 {
-			payload = "API want change directory path"
-			return
-		}
-
-		var encPath string
-		if err = json.Unmarshal(m.Payload, &encPath); err != nil {
-			payload = err.Error()
-			return
-		}
-
-		var paths []string
-		paths, err = decodeStringArray(encPath)
-		if err != nil {
-			payload = err.Error()
-			return
-		}
-
-		if len(paths) == 1 {
-			var stat os.FileInfo
-			if stat, err = os.Stat(paths[0]); err != nil {
-				payload = err.Error()
-				return
-			}
-
-			if stat.IsDir() {
-				if err = setCurrentFiles(w, paths[0]); err != nil {
-					payload = err.Error()
-					return
-				}
-			} else {
-				if err = openArchiveFile(w, paths[0]); err != nil {
-					payload = err.Error()
-					return
-				}
-			}
-		} else {
-			if err = openArchiveFile(w, paths...); err != nil {
-				payload = err.Error()
-				return
-			}
-		}
+	// decode path array
+	var paths []string
+	paths, err = decodeStringArray(path)
+	if err != nil {
+		payload = err.Error()
 		return
 	}
+
+	// dispatch: path array event
+	switch m.Name {
+	case "open-archive":
+		if len(paths) == 1 {
+			// archive file
+			err = openArchiveFile(w, paths[0])
+		} else {
+			// archive into archive file
+			err = fmt.Errorf("UnSupport archive into archive file")
+		}
+		break
+
+	case "change-directory":
+		var stat os.FileInfo
+		if stat, err = os.Stat(paths[0]); err != nil {
+			payload = err.Error()
+			return
+		}
+
+		if len(paths) == 1 && stat.IsDir() {
+			// directory
+			err = setCurrentFiles(w, paths[0])
+		} else {
+			// directory into archive
+			err = openArchiveFile(w, paths...)
+		}
+		break
+	}
+
+	if err != nil {
+		payload = err.Error()
+		return
+	}
+
 	return
 }
 
@@ -150,23 +122,20 @@ func openImageFile(w *astilectron.Window, path string) (err error) {
 }
 
 func openArchiveFile(w *astilectron.Window, paths ...string) error {
-	if len(paths) == 0 {
-		return fmt.Errorf("want archive path")
-	}
+	var path string
+	path, paths = paths[0], paths[1:]
 
-	ext := filepath.Ext(paths[0])
+	ext := filepath.Ext(path)
 	mod, err := module.GetArchiveModule(ext)
 	if err != nil {
 		return fmt.Errorf("not support archive file type %s", ext)
 	}
-
-	if err = mod.Open(paths[0]); err != nil {
+	if err = mod.Open(path); err != nil {
 		return err
 	}
 	defer mod.Close()
 
-	vpath := strings.Join(paths[1:], "/")
-	infos := mod.ReadArchive(vpath)
+	infos := mod.ReadArchive(strings.Join(paths, "/"))
 	sort.Slice(infos, func(i, j int) bool {
 		same := infos[i].IsDir() == infos[j].IsDir()
 		if same {
@@ -178,16 +147,15 @@ func openArchiveFile(w *astilectron.Window, paths ...string) error {
 	})
 
 	parentPaths := make([]string, 0)
-	if len(paths) == 1 {
-		parentPaths = append(parentPaths, filepath.Dir(paths[0]))
+	if len(paths) == 0 {
+		parentPaths = append(parentPaths, filepath.Dir(path))
 	} else {
-		parentPaths = append(parentPaths, paths[0])
-		vpath := strings.Join(paths[1:len(paths)-1], "/")
+		parentPaths = append(parentPaths, path)
+		vpath := strings.Join(paths[:len(paths)-1], "/")
 		if len(vpath) > 0 {
 			parentPaths = append(parentPaths, vpath)
 		}
 	}
-	fmt.Println(parentPaths)
 	parentDir, err := encodeStringArray(parentPaths...)
 	if err != nil {
 		return err
@@ -201,21 +169,22 @@ func openArchiveFile(w *astilectron.Window, paths ...string) error {
 		},
 	}
 
-	exts := module.SupportImageType()
+	imgexts := module.SupportImageType()
+
 	for _, info := range infos {
 		name := info.Name()
 		url := ""
 		typ := "dir"
 
 		// TODO: support inner archive path
-		fullpaths := []string{paths[0], name}
-		if len(paths) > 1 {
-			fullpaths[1] = strings.Join(paths[1:], "/") + "/" + name
+		fullpaths := []string{path, name}
+		if len(paths) > 0 {
+			fullpaths[1] = strings.Join(paths, "/") + "/" + name
 		}
 
 		if info.IsDir() == false {
 			ext := filepath.Ext(name)
-			if slice.Includes(exts, ext) == false {
+			if slice.Includes(imgexts, ext) == false {
 				continue
 			}
 
@@ -265,9 +234,6 @@ func setCurrentFiles(w *astilectron.Window, dir string) error {
 		return infos[i].IsDir()
 	})
 
-	imgexts := module.SupportImageType()
-	archexts := module.SupportArchiveType()
-
 	parentDir, err := encodeStringArray(filepath.Dir(dir))
 	if err != nil {
 		return err
@@ -280,6 +246,9 @@ func setCurrentFiles(w *astilectron.Window, dir string) error {
 			Type: "dir",
 		},
 	}
+
+	imgexts := module.SupportImageType()
+	archexts := module.SupportArchiveType()
 
 	for _, info := range infos {
 		name := info.Name()
@@ -352,6 +321,6 @@ func imageURL(path ...string) (string, error) {
 		return "", err
 	}
 
-	url := "http://localhost:4340/image/?path=" + encPath
+	url := fmt.Sprintf("http://localhost:%d/image/?path=%s", *port, encPath)
 	return url, nil
 }
