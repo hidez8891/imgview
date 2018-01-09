@@ -100,18 +100,19 @@ func imageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	file := paths[len(paths)-1]
-	ext := filepath.Ext(file)
-	mod, err := module.GetImageModule(ext)
+	modimg, err := module.GetImageModule(filepath.Ext(file))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if len(paths) == 1 {
-		if err := mod.WriteResponse(w, file); err != nil {
+		// image file
+		if err := modimg.WriteResponse(w, file); err != nil {
 			astilog.Error(err.Error())
 		}
 	} else {
+		// image file into archive
 		arch := paths[0]
 		modarch, err := module.GetArchiveModule(filepath.Ext(arch))
 		if err != nil {
@@ -138,7 +139,7 @@ func imageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := mod.WriteResponseFromReader(w, r, info.Size()); err != nil {
+		if err := modimg.WriteResponseFromReader(w, r, info.Size()); err != nil {
 			astilog.Error(err.Error())
 		}
 	}
