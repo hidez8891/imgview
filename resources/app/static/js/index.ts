@@ -58,7 +58,7 @@ class Index {
     }
 
     loadImage(path: string) {
-        let img = document.getElementById("image-view") as HTMLImageElement;
+        let img = document.getElementById("image") as HTMLImageElement;
         img.src = path;
     }
 
@@ -68,12 +68,12 @@ class Index {
             div.removeChild(div.firstChild);
         }
 
-        let img = document.getElementById("image-view") as HTMLImageElement;
+        let img = document.getElementById("image") as HTMLImageElement;
         let current_url = img.src;
         let scroll_target: HTMLElement;
 
         for (let file of files) {
-            let e = document.createElement("li");
+            let e = document.createElement("td");
             e.className = "file";
             e.innerHTML = `${file.name}`;
 
@@ -117,7 +117,9 @@ class Index {
                 scroll_target = e;
             }
 
-            div.appendChild(e);
+            let tr = document.createElement("tr");
+            tr.appendChild(e);
+            div.appendChild(tr);
         }
 
         if (scroll_target) {

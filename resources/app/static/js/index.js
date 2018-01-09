@@ -43,7 +43,7 @@ var Index = /** @class */ (function () {
         });
     };
     Index.prototype.loadImage = function (path) {
-        var img = document.getElementById("image-view");
+        var img = document.getElementById("image");
         img.src = path;
     };
     Index.prototype.setCurrentFiles = function (files) {
@@ -51,11 +51,11 @@ var Index = /** @class */ (function () {
         while (div.firstChild) {
             div.removeChild(div.firstChild);
         }
-        var img = document.getElementById("image-view");
+        var img = document.getElementById("image");
         var current_url = img.src;
         var scroll_target;
         var _loop_1 = function (file) {
-            var e = document.createElement("li");
+            var e = document.createElement("td");
             e.className = "file";
             e.innerHTML = "" + file.name;
             switch (file.type) {
@@ -94,7 +94,9 @@ var Index = /** @class */ (function () {
                 e.classList.add("active");
                 scroll_target = e;
             }
-            div.appendChild(e);
+            var tr = document.createElement("tr");
+            tr.appendChild(e);
+            div.appendChild(tr);
         };
         for (var _i = 0, files_1 = files; _i < files_1.length; _i++) {
             var file = files_1[_i];
