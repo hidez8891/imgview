@@ -41,6 +41,22 @@ class Index {
             return false;
         });
 
+        // key event
+        document.addEventListener("keydown", (ev: KeyboardEvent): boolean => {
+            switch (ev.key) {
+                case "ArrowUp":
+                    ev.preventDefault();
+                    this.selectPreviousImage();
+                    break;
+
+                case "ArrowDown":
+                    ev.preventDefault();
+                    this.selectNextImage();
+                    break;
+            }
+            return false;
+        });
+
         // set event listener
         astilectron.onMessage((message: any) => {
             switch (message.name) {
@@ -76,6 +92,7 @@ class Index {
             let e = document.createElement("td");
             e.className = "file";
             e.innerHTML = `${file.name}`;
+            e.classList.add(file.type);
 
             switch (file.type) {
                 case "image":
@@ -88,6 +105,7 @@ class Index {
                         }
                         img.src = file.url;
                         e.classList.add("active");
+                        e.scrollIntoView({ block: "center", inline: "center" }); // Not Support ???
                     }
                     break;
 
@@ -123,8 +141,68 @@ class Index {
         }
 
         if (scroll_target) {
-            scroll_target.scrollIntoView();
+            scroll_target.scrollIntoView({ block: "center", inline: "center" }); // Not Support ???
         }
+    }
+
+    selectPreviousImage() {
+        let acts = document.getElementsByClassName("active");
+        if (acts.length == 0) {
+            return;
+        }
+        let act = acts[0];
+
+        let images: HTMLElement[] = Array.prototype.slice.call(
+            document.getElementById("files").getElementsByClassName("image"));
+        let pre_image: HTMLElement = null;
+        for (let e of images) {
+            if (e === act) {
+                break;
+            }
+            pre_image = e;
+        }
+
+        if (pre_image === null) {
+            // use last image
+            pre_image = images[images.length - 1];
+        } else if (images[images.length - 1] === pre_image) {
+            // not found active element
+            console.log("Error: Not found active image element");
+            return;
+        }
+
+        pre_image.click();
+    }
+
+    selectNextImage() {
+        let acts = document.getElementsByClassName("active");
+        if (acts.length == 0) {
+            return
+        }
+        let act = acts[0];
+
+        let images: HTMLElement[] = Array.prototype.slice.call(
+            document.getElementById("files").getElementsByClassName("image"));
+        let next_image: HTMLElement = null;
+        images.reverse();
+        for (let e of images) {
+            if (e === act) {
+                break;
+            }
+            next_image = e;
+        }
+        images.reverse();
+
+        if (next_image === null) {
+            // use first image
+            next_image = images[0];
+        } else if (images[0] === next_image) {
+            // not found active element
+            console.log("Error: Not found active image element");
+            return;
+        }
+
+        next_image.click();
     }
 };
 
