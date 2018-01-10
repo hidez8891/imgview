@@ -10,6 +10,37 @@ interface FileInfo {
     type: string;
 }
 
+class VueFileList {
+    name: string;
+    type: string;
+    isActive: boolean;
+    onClick: () => void;
+}
+
+declare class Vue {
+    constructor(args: object);
+    files: Array<VueFileList>;
+    updateFiles(files: Array<VueFileList>);
+    updateFile(i: number, v: VueFileList);
+};
+
+let vm = new Vue({
+    el: "#window",
+    data: {
+        header: "header",
+        footer: "footer",
+        files: new Array<VueFileList>()
+    },
+    methods: {
+        updateFiles(files: Array<VueFileList>) {
+            this.files = files;
+        },
+        updateFile(i: number, v: VueFileList) {
+            this.$set(this.files, i, v);
+        }
+    }
+});
+
 class Index {
     constructor() {
         document.addEventListener('astilectron-ready', () => {
@@ -79,38 +110,32 @@ class Index {
     }
 
     setCurrentFiles(files: FileInfo[]) {
-        let div = document.getElementById("files");
-        while (div.firstChild) {
-            div.removeChild(div.firstChild);
-        }
-
         let img = document.getElementById("image") as HTMLImageElement;
         let current_url = img.src;
-        let scroll_target: HTMLElement;
+        let filelists = new Array<VueFileList>();
 
         for (let file of files) {
-            let e = document.createElement("td");
-            e.className = "file";
-            e.innerHTML = `${file.name}`;
-            e.classList.add(file.type);
+            let e = new VueFileList();
+            e.name = file.name;
+            e.type = file.type;
 
             switch (file.type) {
                 case "image":
-                    e.onclick = () => {
-                        let acts = document.getElementsByClassName("active");
-                        if (acts) {
-                            Array.prototype.forEach.call(acts, function (e: HTMLElement) {
-                                e.classList.remove("active");
-                            });
+                    e.onClick = () => {
+                        for (let i = 0; i < vm.files.length; i++) {
+                            let f = vm.files[i];
+                            if (f.isActive) {
+                                f.isActive = false;
+                            }
+                            vm.updateFile(i, f);
                         }
+                        e.isActive = true;
                         img.src = file.url;
-                        e.classList.add("active");
-                        e.scrollIntoView({ block: "center", inline: "center" }); // Not Support ???
                     }
                     break;
 
                 case "arch":
-                    e.onclick = () => {
+                    e.onClick = () => {
                         const message = {
                             name: "open-archive",
                             payload: file.path,
@@ -120,7 +145,7 @@ class Index {
                     break;
 
                 case "dir":
-                    e.onclick = () => {
+                    e.onClick = () => {
                         const message = {
                             name: "change-directory",
                             payload: file.path,
@@ -131,18 +156,13 @@ class Index {
             }
 
             if (current_url == file.url) {
-                e.classList.add("active");
-                scroll_target = e;
+                e.isActive = true;
             }
 
-            let tr = document.createElement("tr");
-            tr.appendChild(e);
-            div.appendChild(tr);
+            filelists.push(e);
         }
 
-        if (scroll_target) {
-            scroll_target.scrollIntoView({ block: "center", inline: "center" }); // Not Support ???
-        }
+        vm.updateFiles(filelists);
     }
 
     selectPreviousImage() {

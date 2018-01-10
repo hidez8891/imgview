@@ -1,3 +1,25 @@
+var VueFileList = /** @class */ (function () {
+    function VueFileList() {
+    }
+    return VueFileList;
+}());
+;
+var vm = new Vue({
+    el: "#window",
+    data: {
+        header: "header",
+        footer: "footer",
+        files: new Array()
+    },
+    methods: {
+        updateFiles: function (files) {
+            this.files = files;
+        },
+        updateFile: function (i, v) {
+            this.$set(this.files, i, v);
+        }
+    }
+});
 var Index = /** @class */ (function () {
     function Index() {
         var _this = this;
@@ -61,34 +83,29 @@ var Index = /** @class */ (function () {
         img.src = path;
     };
     Index.prototype.setCurrentFiles = function (files) {
-        var div = document.getElementById("files");
-        while (div.firstChild) {
-            div.removeChild(div.firstChild);
-        }
         var img = document.getElementById("image");
         var current_url = img.src;
-        var scroll_target;
+        var filelists = new Array();
         var _loop_1 = function (file) {
-            var e = document.createElement("td");
-            e.className = "file";
-            e.innerHTML = "" + file.name;
-            e.classList.add(file.type);
+            var e = new VueFileList();
+            e.name = file.name;
+            e.type = file.type;
             switch (file.type) {
                 case "image":
-                    e.onclick = function () {
-                        var acts = document.getElementsByClassName("active");
-                        if (acts) {
-                            Array.prototype.forEach.call(acts, function (e) {
-                                e.classList.remove("active");
-                            });
+                    e.onClick = function () {
+                        for (var i = 0; i < vm.files.length; i++) {
+                            var f = vm.files[i];
+                            if (f.isActive) {
+                                f.isActive = false;
+                            }
+                            vm.updateFile(i, f);
                         }
+                        e.isActive = true;
                         img.src = file.url;
-                        e.classList.add("active");
-                        e.scrollIntoView({ block: "center", inline: "center" }); // Not Support ???
                     };
                     break;
                 case "arch":
-                    e.onclick = function () {
+                    e.onClick = function () {
                         var message = {
                             name: "open-archive",
                             payload: file.path,
@@ -97,7 +114,7 @@ var Index = /** @class */ (function () {
                     };
                     break;
                 case "dir":
-                    e.onclick = function () {
+                    e.onClick = function () {
                         var message = {
                             name: "change-directory",
                             payload: file.path,
@@ -107,20 +124,15 @@ var Index = /** @class */ (function () {
                     break;
             }
             if (current_url == file.url) {
-                e.classList.add("active");
-                scroll_target = e;
+                e.isActive = true;
             }
-            var tr = document.createElement("tr");
-            tr.appendChild(e);
-            div.appendChild(tr);
+            filelists.push(e);
         };
         for (var _i = 0, files_1 = files; _i < files_1.length; _i++) {
             var file = files_1[_i];
             _loop_1(file);
         }
-        if (scroll_target) {
-            scroll_target.scrollIntoView({ block: "center", inline: "center" }); // Not Support ???
-        }
+        vm.updateFiles(filelists);
     };
     Index.prototype.selectPreviousImage = function () {
         var acts = document.getElementsByClassName("active");

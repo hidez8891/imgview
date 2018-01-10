@@ -6,12 +6,13 @@
         <meta charset="utf-8">
         <link rel="stylesheet" href="static/lib/photon/css/photon.min.css">
         <link rel="stylesheet" href="static/css/index.css">
+        <script src="https://unpkg.com/vue@2.5.13/dist/vue.js"></script>
     </head>
 
     <body>
-        <div class="window">
+        <div id="window" class="window">
             <header class="toolbar toolbar-header">
-                <h1 class="title">header</h1>
+                <h1 class="title">{{ header }}</h1>
             </header>
             <div class="window-content">
                 <div class="pane-group">
@@ -23,7 +24,9 @@
                                 </tr>
                             </thead>
                             <tbody id="files">
-                                <!-- file list view -->
+                                <tr v-for="file in files">
+                                    <td class="file" v-bind:class="[file.type, {active: file.isActive}]" v-on:click="file.onClick">{{ file.name }}</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -33,7 +36,7 @@
                 </div>
             </div>
             <footer class="toolbar toolbar-footer">
-                <h1 class="title">footer</h1>
+                <h1 class="title">{{ footer }}</h1>
             </footer>
         </div>
         <script src="static/js/index.js"></script>
