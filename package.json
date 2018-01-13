@@ -5,16 +5,23 @@
   "scripts": {
     "build:assets": "cpx \"./resources/**/*.html\" ./output/windows-amd64/resources",
     "build:go": "go build && cpx *.exe ./output/windows-amd64",
-    "build:tsc": "tsc && cpx \"./resources/**/*.js\" ./output/windows-amd64/resources",
+    "build:tsc": "webpack",
     "build:css": "node-sass -r -o resources resources && cpx \"./resources/**/*.css\" ./output/windows-amd64/resources",
     "start": "cd ./output/windows-amd64 && imgview.exe -d",
     "pack": "astilectron-bundler.exe -v"
   },
   "author": "hidez8891",
   "license": "MIT",
+  "dependencies": {
+    "vue": "^2.5.13",
+    "vue-class-component": "^6.1.2"
+  },
   "devDependencies": {
+    "awesome-typescript-loader": "^3.4.1",
     "cpx": "^1.5.0",
     "node-sass": "^4.7.2",
-    "typescript": "^2.6.2"
+    "source-map-loader": "^0.2.3",
+    "typescript": "^2.6.2",
+    "webpack": "^3.10.0"
   }
 }

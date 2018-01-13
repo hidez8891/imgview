@@ -1,13 +1,98 @@
-declare var astilectron: any;
-declare interface File {
-    path: string;
-}
+import Vue from 'vue';
+import Component from 'vue-class-component';
+
+@Component({
+    props: ['tag', 'isActive', 'name', 'onClick'],
+    template: `
+        <td class="file"
+            v-bind:class="[tag, {active: isActive}]"
+            v-on:click="onClick">
+            {{ name }}
+        </td>`
+})
+class FileListItemView extends Vue {
+};
+
+@Component({
+    props: ['files'],
+    components: { FileListItemView },
+    template: `
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                </tr>
+            </thead>
+            <tbody id="files">
+                <tr v-for="file in files">
+                    <file-list-item-view
+                     v-bind:tag="file.info.type"
+                     v-bind:isActive="file.isActive"
+                     v-bind:name="file.info.name"
+                     v-bind:onClick="file.onClick"/>
+                    </file-list-item-view>
+                </tr>
+            </tbody>
+        </table>`
+})
+class FileListView extends Vue {
+};
+
+class FileListItem {
+    info: FileInfo;
+    isActive: boolean;
+    onClick: () => void;
+};
 
 interface FileInfo {
     name: string;
     path: string;
     url: string;
     type: string;
+}
+
+let vm = new Vue({
+    el: "#window",
+    data: {
+        header: "header",
+        footer: "footer",
+        files: new Array<FileListItem>(),
+        updateScroll: false
+    },
+    methods: {
+        setFiles: function (files: FileListItem[]) {
+            this.files = files;
+        },
+        updateFiles: function (updater: (FileListItem) => boolean) {
+            for (let i = 0; i < this.files.length; i++) {
+                let v = this.files[i];
+                if (updater(v)) {
+                    this.$set(this.files, i, v);
+                }
+            }
+        }
+    },
+    updated: function () {
+        if (this.updateScroll) {
+            this.updateScroll = false;
+            this.$nextTick(function () {
+                scrollActive();
+            });
+        }
+    },
+    components: {
+        FileListView,
+        FileListItemView
+    }
+});
+
+function scrollActive() {
+    let acts = document.getElementsByClassName("active");
+    if (acts.length == 0) {
+        return
+    }
+    let act = acts[0];
+    act.scrollIntoView();
 }
 
 class Index {
@@ -41,6 +126,22 @@ class Index {
             return false;
         });
 
+        // key event
+        document.addEventListener("keydown", (ev: KeyboardEvent): boolean => {
+            switch (ev.key) {
+                case "ArrowUp":
+                    ev.preventDefault();
+                    this.selectPreviousImage();
+                    break;
+
+                case "ArrowDown":
+                    ev.preventDefault();
+                    this.selectNextImage();
+                    break;
+            }
+            return false;
+        });
+
         // set event listener
         astilectron.onMessage((message: any) => {
             switch (message.name) {
@@ -58,41 +159,40 @@ class Index {
     }
 
     loadImage(path: string) {
-        let img = document.getElementById("image-view") as HTMLImageElement;
+        let img = document.getElementById("image") as HTMLImageElement;
         img.src = path;
     }
 
     setCurrentFiles(files: FileInfo[]) {
-        let div = document.getElementById("files");
-        while (div.firstChild) {
-            div.removeChild(div.firstChild);
-        }
-
-        let img = document.getElementById("image-view") as HTMLImageElement;
+        let img = document.getElementById("image") as HTMLImageElement;
         let current_url = img.src;
-        let scroll_target: HTMLElement;
+        let filelists = new Array<FileListItem>();
 
         for (let file of files) {
-            let e = document.createElement("li");
-            e.className = "file";
-            e.innerHTML = `${file.name}`;
+            let e = new FileListItem();
+            e.info = file;
 
             switch (file.type) {
                 case "image":
-                    e.onclick = () => {
-                        let acts = document.getElementsByClassName("active");
-                        if (acts) {
-                            Array.prototype.forEach.call(acts, function (e: HTMLElement) {
-                                e.classList.remove("active");
-                            });
-                        }
+                    e.onClick = () => {
+                        vm.updateFiles((f: FileListItem): boolean => {
+                            if (f.isActive) {
+                                f.isActive = false;
+                                return true;
+                            } else if (f.info.name === e.info.name) {
+                                f.isActive = true;
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
                         img.src = file.url;
-                        e.classList.add("active");
+                        vm.updateScroll = true;
                     }
                     break;
 
                 case "arch":
-                    e.onclick = () => {
+                    e.onClick = () => {
                         const message = {
                             name: "open-archive",
                             payload: file.path,
@@ -102,7 +202,7 @@ class Index {
                     break;
 
                 case "dir":
-                    e.onclick = () => {
+                    e.onClick = () => {
                         const message = {
                             name: "change-directory",
                             payload: file.path,
@@ -113,16 +213,73 @@ class Index {
             }
 
             if (current_url == file.url) {
-                e.classList.add("active");
-                scroll_target = e;
+                e.isActive = true;
             }
-
-            div.appendChild(e);
+            filelists.push(e);
         }
 
-        if (scroll_target) {
-            scroll_target.scrollIntoView();
+        vm.setFiles(filelists);
+        vm.updateScroll = true;
+    }
+
+    selectPreviousImage() {
+        let acts = document.getElementsByClassName("active");
+        if (acts.length == 0) {
+            return;
         }
+        let act = acts[0];
+
+        let images: HTMLElement[] = Array.prototype.slice.call(
+            document.getElementById("files").getElementsByClassName("image"));
+        let pre_image: HTMLElement = null;
+        for (let e of images) {
+            if (e === act) {
+                break;
+            }
+            pre_image = e;
+        }
+
+        if (pre_image === null) {
+            // use last image
+            pre_image = images[images.length - 1];
+        } else if (images[images.length - 1] === pre_image) {
+            // not found active element
+            console.log("Error: Not found active image element");
+            return;
+        }
+
+        pre_image.click();
+    }
+
+    selectNextImage() {
+        let acts = document.getElementsByClassName("active");
+        if (acts.length == 0) {
+            return
+        }
+        let act = acts[0];
+
+        let images: HTMLElement[] = Array.prototype.slice.call(
+            document.getElementById("files").getElementsByClassName("image"));
+        let next_image: HTMLElement = null;
+        images.reverse();
+        for (let e of images) {
+            if (e === act) {
+                break;
+            }
+            next_image = e;
+        }
+        images.reverse();
+
+        if (next_image === null) {
+            // use first image
+            next_image = images[0];
+        } else if (images[0] === next_image) {
+            // not found active element
+            console.log("Error: Not found active image element");
+            return;
+        }
+
+        next_image.click();
     }
 };
 

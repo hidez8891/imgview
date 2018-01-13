@@ -1,8 +1,16 @@
 {
   "compilerOptions": {
+    "rootDir": "./resources",
+    "sourceMap": true,
     "target": "es5",
-    //"outDir": "./resources",
-    "rootDir": "./resources"
+    "module": "es2015",
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "lib": [
+      "dom",
+      "es2017"
+    ]
   },
   "exclude": [
     "node_modules",
