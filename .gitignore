@@ -6,4 +6,5 @@ output
 vendor
 windows.syso
 node_modules
+dist
 *.exe

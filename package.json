@@ -5,8 +5,8 @@
   "scripts": {
     "build:assets": "cpx \"./resources/**/*.html\" ./output/windows-amd64/resources",
     "build:go": "go build && cpx *.exe ./output/windows-amd64",
-    "build:tsc": "webpack",
-    "build:css": "node-sass -r -o resources resources && cpx \"./resources/**/*.css\" ./output/windows-amd64/resources",
+    "build:tsc": "webpack --config-name=tsc",
+    "build:css": "webpack --config-name=scss",
     "start": "cd ./output/windows-amd64 && imgview.exe -d",
     "pack": "astilectron-bundler.exe -v"
   },
@@ -19,8 +19,12 @@
   "devDependencies": {
     "awesome-typescript-loader": "^3.4.1",
     "cpx": "^1.5.0",
+    "css-loader": "^0.28.8",
+    "extract-text-webpack-plugin": "^3.0.2",
     "node-sass": "^4.7.2",
+    "sass-loader": "^6.0.6",
     "source-map-loader": "^0.2.3",
+    "style-loader": "^0.19.1",
     "typescript": "^2.6.2",
     "webpack": "^3.10.0"
   }
