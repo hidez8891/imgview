@@ -1,7 +1,48 @@
-declare var astilectron: any;
-declare interface File {
-    path: string;
-}
+import Vue from 'vue';
+import Component from 'vue-class-component';
+
+@Component({
+    props: ['tag', 'isActive', 'name', 'onClick'],
+    template: `
+        <td class="file"
+            v-bind:class="[tag, {active: isActive}]"
+            v-on:click="onClick">
+            {{ name }}
+        </td>`
+})
+class FileListItemView extends Vue {
+};
+
+@Component({
+    props: ['files'],
+    components: { FileListItemView },
+    template: `
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                </tr>
+            </thead>
+            <tbody id="files">
+                <tr v-for="file in files">
+                    <file-list-item-view
+                     v-bind:tag="file.info.type"
+                     v-bind:isActive="file.isActive"
+                     v-bind:name="file.info.name"
+                     v-bind:onClick="file.onClick"/>
+                    </file-list-item-view>
+                </tr>
+            </tbody>
+        </table>`
+})
+class FileListView extends Vue {
+};
+
+class FileListItem {
+    info: FileInfo;
+    isActive: boolean;
+    onClick: () => void;
+};
 
 interface FileInfo {
     name: string;
@@ -10,36 +51,49 @@ interface FileInfo {
     type: string;
 }
 
-class VueFileList {
-    name: string;
-    type: string;
-    isActive: boolean;
-    onClick: () => void;
-}
-
-declare class Vue {
-    constructor(args: object);
-    files: Array<VueFileList>;
-    updateFiles(files: Array<VueFileList>);
-    updateFile(i: number, v: VueFileList);
-};
-
 let vm = new Vue({
     el: "#window",
     data: {
         header: "header",
         footer: "footer",
-        files: new Array<VueFileList>()
+        files: new Array<FileListItem>(),
+        updateScroll: false
     },
     methods: {
-        updateFiles(files: Array<VueFileList>) {
+        setFiles: function (files: FileListItem[]) {
             this.files = files;
         },
-        updateFile(i: number, v: VueFileList) {
-            this.$set(this.files, i, v);
+        updateFiles: function (updater: (FileListItem) => boolean) {
+            for (let i = 0; i < this.files.length; i++) {
+                let v = this.files[i];
+                if (updater(v)) {
+                    this.$set(this.files, i, v);
+                }
+            }
         }
+    },
+    updated: function () {
+        if (this.updateScroll) {
+            this.updateScroll = false;
+            this.$nextTick(function () {
+                scrollActive();
+            });
+        }
+    },
+    components: {
+        FileListView,
+        FileListItemView
     }
 });
+
+function scrollActive() {
+    let acts = document.getElementsByClassName("active");
+    if (acts.length == 0) {
+        return
+    }
+    let act = acts[0];
+    act.scrollIntoView();
+}
 
 class Index {
     constructor() {
@@ -112,25 +166,28 @@ class Index {
     setCurrentFiles(files: FileInfo[]) {
         let img = document.getElementById("image") as HTMLImageElement;
         let current_url = img.src;
-        let filelists = new Array<VueFileList>();
+        let filelists = new Array<FileListItem>();
 
         for (let file of files) {
-            let e = new VueFileList();
-            e.name = file.name;
-            e.type = file.type;
+            let e = new FileListItem();
+            e.info = file;
 
             switch (file.type) {
                 case "image":
                     e.onClick = () => {
-                        for (let i = 0; i < vm.files.length; i++) {
-                            let f = vm.files[i];
+                        vm.updateFiles((f: FileListItem): boolean => {
                             if (f.isActive) {
                                 f.isActive = false;
+                                return true;
+                            } else if (f.info.name === e.info.name) {
+                                f.isActive = true;
+                                return true;
+                            } else {
+                                return false;
                             }
-                            vm.updateFile(i, f);
-                        }
-                        e.isActive = true;
+                        });
                         img.src = file.url;
+                        vm.updateScroll = true;
                     }
                     break;
 
@@ -158,11 +215,11 @@ class Index {
             if (current_url == file.url) {
                 e.isActive = true;
             }
-
             filelists.push(e);
         }
 
-        vm.updateFiles(filelists);
+        vm.setFiles(filelists);
+        vm.updateScroll = true;
     }
 
     selectPreviousImage() {

@@ -6,7 +6,6 @@
         <meta charset="utf-8">
         <link rel="stylesheet" href="static/lib/photon/css/photon.min.css">
         <link rel="stylesheet" href="static/css/index.css">
-        <script src="https://unpkg.com/vue@2.5.13/dist/vue.js"></script>
     </head>
 
     <body>
@@ -17,18 +16,8 @@
             <div class="window-content">
                 <div class="pane-group">
                     <div class="pane pane-sm sidebar list-view">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                </tr>
-                            </thead>
-                            <tbody id="files">
-                                <tr v-for="file in files">
-                                    <td class="file" v-bind:class="[file.type, {active: file.isActive}]" v-on:click="file.onClick">{{ file.name }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <file-list-view v-bind:files="files" />
+                        </file-list-view>
                     </div>
                     <div class="pane image-view">
                         <img id="image"></img>
@@ -39,6 +28,10 @@
                 <h1 class="title">{{ footer }}</h1>
             </footer>
         </div>
+        <script>
+            //var exports = window.exports = {};
+            //require("./static/js/index.js");
+        </script>
         <script src="static/js/index.js"></script>
     </body>
 

@@ -1,10 +1,61 @@
-var VueFileList = /** @class */ (function () {
-    function VueFileList() {
+"use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var vue_1 = require("vue");
+var vue_class_component_1 = require("vue-class-component");
+var v = require('vue');
+console.log(v);
+console.log(vue_1.default);
+var FileListView = /** @class */ (function (_super) {
+    __extends(FileListView, _super);
+    function FileListView() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
-    return VueFileList;
+    FileListView = __decorate([
+        vue_class_component_1.default({
+            props: ['files'],
+            template: "\n        <tr v-for=\"file in files\">\n            <file-list-item-view v-bind:item=\"file\"/>\n            </file-list-item-view>\n        </tr>"
+        })
+    ], FileListView);
+    return FileListView;
+}(vue_1.default));
+;
+var FileListItemView = /** @class */ (function (_super) {
+    __extends(FileListItemView, _super);
+    function FileListItemView() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    FileListItemView = __decorate([
+        vue_class_component_1.default({
+            props: ['item'],
+            template: "\n        <td class=\"file\"\n            v-bind:class=\"[item.info.type, {active: item.isActive}]\"\n            v-on:click=\"item.onClick\">\n            {{ item.info.name }}\n        </td>"
+        })
+    ], FileListItemView);
+    return FileListItemView;
+}(vue_1.default));
+;
+var FileListItem = /** @class */ (function () {
+    function FileListItem() {
+    }
+    return FileListItem;
 }());
 ;
-var vm = new Vue({
+var vm = new vue_1.default({
     el: "#window",
     data: {
         header: "header",
@@ -12,12 +63,21 @@ var vm = new Vue({
         files: new Array()
     },
     methods: {
-        updateFiles: function (files) {
+        setFiles: function (files) {
             this.files = files;
         },
-        updateFile: function (i, v) {
-            this.$set(this.files, i, v);
+        updateFiles: function (updater) {
+            for (var i = 0; i < this.files.length; i++) {
+                var v_1 = this.files[i];
+                if (updater(v_1)) {
+                    this.$set(this.files, i, v_1);
+                }
+            }
         }
+    },
+    components: {
+        FileListView: FileListView,
+        FileListItemView: FileListItemView
     }
 });
 var Index = /** @class */ (function () {
@@ -87,20 +147,24 @@ var Index = /** @class */ (function () {
         var current_url = img.src;
         var filelists = new Array();
         var _loop_1 = function (file) {
-            var e = new VueFileList();
-            e.name = file.name;
-            e.type = file.type;
+            var e = new FileListItem();
+            e.info = file;
             switch (file.type) {
                 case "image":
                     e.onClick = function () {
-                        for (var i = 0; i < vm.files.length; i++) {
-                            var f = vm.files[i];
+                        vm.updateFiles(function (f) {
                             if (f.isActive) {
                                 f.isActive = false;
+                                return true;
                             }
-                            vm.updateFile(i, f);
-                        }
-                        e.isActive = true;
+                            else if (f == e) {
+                                f.isActive = true;
+                                return true;
+                            }
+                            else {
+                                return false;
+                            }
+                        });
                         img.src = file.url;
                     };
                     break;
@@ -132,7 +196,7 @@ var Index = /** @class */ (function () {
             var file = files_1[_i];
             _loop_1(file);
         }
-        vm.updateFiles(filelists);
+        vm.setFiles(filelists);
     };
     Index.prototype.selectPreviousImage = function () {
         var acts = document.getElementsByClassName("active");
