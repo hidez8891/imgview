@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "build:go": "go build && cpx *.exe ./output/windows-amd64",
-    "build:tsc": "webpack --config-name=tsc",
+    "build:js": "webpack --config-name=tsc",
     "build:css": "webpack --config-name=scss",
     "build:html": "webpack --config-name=html",
     "build:lib": "cpx ./src/resources/app/static/lib/**/* ./dist/resources/app/static/lib",
