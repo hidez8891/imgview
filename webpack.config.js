@@ -1,13 +1,13 @@
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
-const src_dir = "src/resources/app/static";
-const dist_dir = "dist/resources/app/static";
+const src_dir = "src/resources/app";
+const dist_dir = "dist/resources/app";
 
 module.exports = [{
         name: "tsc",
-        entry: `./${src_dir}/js/index.ts`,
+        entry: `./${src_dir}/static/js/index.ts`,
         output: {
-            path: `${__dirname}/${dist_dir}/js`,
+            path: `${__dirname}/${dist_dir}/static/js`,
             filename: 'index.js'
         },
         module: {
@@ -31,9 +31,9 @@ module.exports = [{
     },
     {
         name: "scss",
-        entry: `./${src_dir}/css/index.scss`,
+        entry: `./${src_dir}/static/css/index.scss`,
         output: {
-            path: `${__dirname}/${dist_dir}/css`,
+            path: `${__dirname}/${dist_dir}/static/css`,
             filename: 'index.css'
         },
         module: {
@@ -54,6 +54,25 @@ module.exports = [{
         },
         plugins: [
             new ExtractTextPlugin('index.css')
+        ]
+    },
+    {
+        name: "html",
+        entry: `./${src_dir}/index.html`,
+        output: {
+            path: `${__dirname}/${dist_dir}`,
+            filename: 'index.html'
+        },
+        module: {
+            rules: [{
+                test: /\.html$/,
+                use: ExtractTextPlugin.extract({
+                    use: ['html-loader']
+                })
+            }]
+        },
+        plugins: [
+            new ExtractTextPlugin('index.html')
         ]
     }
 ];
