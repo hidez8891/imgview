@@ -1,7 +1,7 @@
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
-const src_dir = "src/resources/app";
-const dist_dir = "dist/resources/app";
+const src_dir = "resources/app/src";
+const dist_dir = "resources/app/dist";
 
 module.exports = [{
         name: "tsc",
@@ -25,7 +25,10 @@ module.exports = [{
         resolve: {
             extensions: [
                 '.ts'
-            ]
+            ],
+            alias: {
+                'vue$': 'vue/dist/vue.esm.js'
+            }
         },
         devtool: 'source-map'
     },

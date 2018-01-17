@@ -3,7 +3,7 @@ Thumbs.db
 .idea/
 bind*
 output
-vendor
+vendor*
 windows.syso
 node_modules
 dist

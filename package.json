@@ -3,13 +3,12 @@
   "version": "0.0.1",
   "description": "",
   "scripts": {
-    "build:go": "go build && cpx *.exe ./output/windows-amd64",
     "build:js": "webpack --config-name=tsc",
     "build:css": "webpack --config-name=scss",
     "build:html": "webpack --config-name=html",
-    "build:lib": "cpx ./src/resources/app/static/lib/**/* ./dist/resources/app/static/lib",
-    "start": "cd ./output/windows-amd64 && imgview.exe -d",
-    "pack": "astilectron-bundler.exe -v"
+    "build:lib": "cpx ./resources/app/src/static/lib/**/* ./resources/app/dist/static/lib",
+    "build:icon": "cpx ./resources/app/src/icons/**/* ./resources/app/dist/icons",
+    "release": "astilectron-bundler.exe -v"
   },
   "author": "hidez8891",
   "license": "MIT",
