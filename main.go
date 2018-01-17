@@ -37,11 +37,11 @@ func main() {
 		Asset: Asset,
 		AstilectronOptions: astilectron.Options{
 			AppName:            AppName,
-			AppIconDarwinPath:  "resources/icon.icns",
-			AppIconDefaultPath: "resources/icon.png",
+			AppIconDarwinPath:  "resources/app/dist/icons/icon.icns",
+			AppIconDefaultPath: "resources/app/dist/icons/icon.png",
 		},
 		Debug:       *debug,
-		Homepage:    "index.html",
+		Homepage:    "dist/index.html",
 		MenuOptions: []*astilectron.MenuItemOptions{},
 		OnWait: func(_ *astilectron.Astilectron, w *astilectron.Window, _ *astilectron.Menu, _ *astilectron.Tray, _ *astilectron.Menu) error {
 			wnd = w
@@ -60,6 +60,7 @@ func main() {
 	// Run bootstrap
 	astilog.Debugf("Running app built at %s", BuiltAt)
 	if err := bootstrap.Run(options); err != nil {
+		fmt.Println(err)
 		astilog.Fatal(errors.Wrap(err, "running bootstrap failed"))
 	}
 
