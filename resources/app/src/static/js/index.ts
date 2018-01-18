@@ -70,19 +70,35 @@ let vm = new Vue({
     el: "#window",
     data: {
         header: "header",
-        footer: "footer",
         files: new Array<FileListItem>(),
+        currentFileName: "",
         updateScroll: false
+    },
+    computed: {
+        footer: function () {
+            return this.currentFileName;
+        }
     },
     methods: {
         setFiles: function (files: FileListItem[]) {
             this.files = files;
+            this.updateCurrentFileName();
         },
         updateFiles: function (updater: (FileListItem) => boolean) {
             for (let i = 0; i < this.files.length; i++) {
-                let v = this.files[i];
+                let v = this.files[i] as FileListItem;
                 if (updater(v)) {
                     this.$set(this.files, i, v);
+                }
+            }
+            this.updateCurrentFileName();
+        },
+        updateCurrentFileName: function () {
+            for (let i = 0; i < this.files.length; i++) {
+                let v = this.files[i] as FileListItem;
+                if (v.isActive) {
+                    this.currentFileName = v.info.name;
+                    return;
                 }
             }
         }
