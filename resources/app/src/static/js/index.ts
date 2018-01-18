@@ -7,8 +7,23 @@ import Component from 'vue-class-component';
         <td class="file"
             v-bind:class="[tag, {active: isActive}]"
             v-on:click="onClick">
+            <span class="icon" v-bind:class="[iconType]">
+            </span>
             {{ name }}
-        </td>`
+        </td>`,
+    computed: {
+        iconType: function (): string {
+            switch (this.tag) {
+                case "image":
+                    return "image icon-newspaper";
+                case "arch":
+                    return "arch icon-box";
+                case "dir":
+                    return "dir icon-folder";
+            }
+            return "";
+        }
+    }
 })
 class FileListItemView extends Vue {
 };

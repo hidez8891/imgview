@@ -11,3 +11,15 @@
 .active {
     background: cyan;
 }
+
+.icon {
+    &.image {
+        color: #1BA466;
+    }
+    &.arch {
+        color: #4B75B9;
+    }
+    &.dir {
+        color: #E06A3B;
+    }
+}
