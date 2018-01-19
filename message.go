@@ -39,13 +39,12 @@ func apiEventHandler(w *astilectron.Window, m bootstrap.MessageIn) (payload inte
 	// dispatch: single path event
 	switch m.Name {
 	case "open-file":
-		if err = openImageFile(w, path); err != nil {
+		dir := filepath.Dir(path)
+		if err = setCurrentFiles(w, dir); err != nil {
 			payload = err.Error()
 			return
 		}
-
-		dir := filepath.Dir(path)
-		if err = setCurrentFiles(w, dir); err != nil {
+		if err = setCurrentFilePath(w, path); err != nil {
 			payload = err.Error()
 			return
 		}
@@ -290,6 +289,22 @@ func setCurrentFiles(w *astilectron.Window, dir string) error {
 	ret := bootstrap.MessageIn{
 		Name:    "set-current-files",
 		Payload: packFiles,
+	}
+	return w.SendMessage(ret)
+}
+
+func setCurrentFilePath(w *astilectron.Window, path string) error {
+	encPath, err := encodeStringArray(path)
+	if err != nil {
+		return err
+	}
+	packPath, err := json.Marshal(encPath)
+	if err != nil {
+		return err
+	}
+	ret := bootstrap.MessageIn{
+		Name:    "set-current-file-path",
+		Payload: packPath,
 	}
 	return w.SendMessage(ret)
 }

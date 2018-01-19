@@ -62,14 +62,14 @@ class Index {
         // set event listener
         astilectron.onMessage((message: any) => {
             switch (message.name) {
-                case "load-image":
-                    const path = message.payload as string;
-                    console.log("load-image: " + path);
-                    return;
-
                 case "set-current-files":
                     const files = message.payload as FileInfo[];
                     setCurrentFiles(files);
+                    return;
+
+                case "set-current-file-path":
+                    const path = message.payload as string;
+                    setCurrentFileName(path);
                     return;
             }
         });
@@ -108,6 +108,15 @@ let vm = new Vue({
         ImageView,
     }
 });
+
+function setCurrentFileName(path: string) {
+    for (let file of vm.files) {
+        if (file.path === path) {
+            vm.currentFileName = file.name;
+            return
+        }
+    }
+}
 
 function setCurrentFiles(infos: FileInfo[]) {
     let files = new Array<FileListItem>();
