@@ -22,12 +22,13 @@
             <div class="pane-group">
                 <div class="pane pane-sm sidebar list-view">
                     <file-list-view :files="files"
-                                    :current-file-name.sync="currentFileName">
+                                    :current-file-name.sync="currentFileName"
+                                    :current-file-name-list="currentFileNameList">
                     </file-list-view>
                 </div>
                 <div class="pane image-view">
                     <image-view :files="files"
-                                :current-file-name="currentFileName">
+                                :current-file-name-list="currentFileNameList">
                     </image-view>
                 </div>
             </div>

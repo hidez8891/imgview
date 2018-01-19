@@ -5,22 +5,24 @@ import { FileListItem } from './FileListView';
 
 @Component({
     template: `
-        <img id="image"
-             :src="url" />`
+        <div>
+            <img class="image"
+                 :class="{multi: currentFileNameList.length > 1}"
+                 v-for="file in imageFiles"
+                 :src="file.url" />
+        </div>
+    `
 })
 export class ImageView extends Vue {
     @Prop()
     files: FileListItem[];
 
     @Prop()
-    currentFileName: string;
+    currentFileNameList: string[];
 
-    get url(): string {
-        for (let file of this.files) {
-            if (file.name === this.currentFileName) {
-                return file.url;
-            }
-        }
-        return "";
+    get imageFiles() {
+        return this.files.filter((val) => {
+            return this.currentFileNameList.includes(val.name);
+        })
     }
 };

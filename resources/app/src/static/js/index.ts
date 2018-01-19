@@ -85,12 +85,11 @@ let vm = new Vue({
     },
     computed: {
         footer: function () {
-            return this.currentFileName;
-        }
-    },
-    watch: {
-        currentFileName: function (val) {
-            this.currentFileName = val;
+            return this.currentFileNameList.join(" / ");
+        },
+        currentFileNameList: function () {
+            let list = [this.currentFileName];
+            return appendNextFileNameIfNeed(list, this);
         }
     },
     updated: function () {
@@ -140,22 +139,22 @@ function selectPreviousImage() {
         return;
     }
 
-    let pre = 0;
-    if (files[pre].name === vm.currentFileName) {
-        pre = files.length - 1;
-        vm.currentFileName = files[pre].name;
+    let d = 1;
+    if (!vm.isSinglePanel && files.length > 2) {
+        d = 2;
+    }
+
+    let index = files.findIndex((val) => {
+        return val.name === vm.currentFileName;
+    })
+    if (index < 0) {
         return;
     }
 
-    for (; pre + 1 < files.length; pre++) {
-        if (files[pre + 1].name === vm.currentFileName) {
-            break;
-        }
+    if (index - d < 0) {
+        index = files.length - 1 + d;
     }
-    if (pre === files.length) {
-        return;
-    }
-    vm.currentFileName = files[pre].name;
+    vm.currentFileName = files[index - d].name;
 }
 
 function selectNextImage() {
@@ -166,22 +165,47 @@ function selectNextImage() {
         return;
     }
 
-    let next = files.length - 1;
-    if (files[next].name === vm.currentFileName) {
-        next = 0;
-        vm.currentFileName = files[next].name;
+    let d = 1;
+    if (!vm.isSinglePanel && files.length > 2) {
+        d = 2;
+    }
+
+    let index = files.findIndex((val) => {
+        return val.name === vm.currentFileName;
+    })
+    if (index < 0) {
         return;
     }
 
-    for (; next - 1 >= 0; next--) {
-        if (files[next - 1].name === vm.currentFileName) {
-            break;
-        }
+    if (index + d > files.length - 1) {
+        index = 0 - d;
     }
-    if (next === 0) {
-        return;
+    vm.currentFileName = files[index + d].name;
+}
+
+function appendNextFileNameIfNeed(list: string[], v = vm) {
+    if (v.isSinglePanel) {
+        return list;
     }
-    vm.currentFileName = files[next].name;
+
+    let files = v.files.filter((val) => {
+        return val.type === "image";
+    });
+    if (files.length < 2) {
+        return list;
+    }
+
+    let index = files.findIndex((val) => {
+        return val.name === list[0];
+    });
+    if (index < 0) {
+        return list;
+    }
+
+    if (index === files.length - 1) {
+        index = 0 - 1;
+    }
+    return list.concat([files[index + 1].name]);
 }
 
 

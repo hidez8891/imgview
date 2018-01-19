@@ -50,7 +50,7 @@ class FileListItemView extends Vue {
                     :key="file.name">
                     <file-list-item-view :type="file.type"
                                          :name="file.name"
-                                         :isActive="file.name === currentFileName"
+                                         :isActive="currentFileNameList.includes(file.name)"
                                          @click="onClick(file)">
                     </file-list-item-view>
                 </tr>
@@ -63,6 +63,9 @@ export class FileListView extends Vue {
 
     @Prop()
     currentFileName: string;
+
+    @Prop()
+    currentFileNameList: string[];
 
     onClick(file: FileListItem) {
         switch (file.type) {
