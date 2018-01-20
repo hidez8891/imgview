@@ -150,7 +150,7 @@ func imageHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := modimg.WriteResponseFromReader(w, r, info.Size()); err != nil {
-			astilog.Error(err.Error())
+			astilog.Warn(err.Error())
 		}
 	}
 }
