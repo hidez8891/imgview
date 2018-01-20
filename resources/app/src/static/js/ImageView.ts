@@ -5,7 +5,7 @@ import { FileListItem } from './FileListView';
 
 @Component({
     template: `
-        <div>
+        <div :class="{reverse: !isLeftToRight}">
             <img class="image"
                  :class="{multi: currentFileNameList.length > 1}"
                  v-for="file in imageFiles"
@@ -19,6 +19,9 @@ export class ImageView extends Vue {
 
     @Prop()
     currentFileNameList: string[];
+
+    @Prop()
+    isLeftToRight: Boolean
 
     get imageFiles() {
         return this.files.filter((val) => {

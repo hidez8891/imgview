@@ -16,6 +16,9 @@
                 <toolbar-image-panel-mode class="pull-right"
                                           :is-single-panel.sync="isSinglePanel">
                 </toolbar-image-panel-mode>
+                <toolbar-image-direction class="pull-right"
+                                         :is-left-to-right.sync="isLeftToRight">
+                </toolbar-image-direction>
             </div>
         </header>
         <div class="window-content">
@@ -28,7 +31,8 @@
                 </div>
                 <div class="pane image-view">
                     <image-view :files="files"
-                                :current-file-name-list="currentFileNameList">
+                                :current-file-name-list="currentFileNameList"
+                                :is-left-to-right="isLeftToRight">
                     </image-view>
                 </div>
             </div>

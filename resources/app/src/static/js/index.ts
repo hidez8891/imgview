@@ -3,7 +3,7 @@ import Component from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
 import { FileListView, FileListItem } from './FileListView';
 import { ImageView } from './ImageView';
-import { ToolbarImagePanelMode } from './Toolbar';
+import { ToolbarImagePanelMode, ToolbarImageDirection } from './Toolbar';
 
 interface FileInfo {
     name: string;
@@ -81,7 +81,8 @@ let vm = new Vue({
     data: {
         files: new Array<FileListItem>(),
         currentFileName: "",
-        isSinglePanel: false
+        isSinglePanel: false,
+        isLeftToRight: false,
     },
     computed: {
         footer: function () {
@@ -103,6 +104,7 @@ let vm = new Vue({
     },
     components: {
         ToolbarImagePanelMode,
+        ToolbarImageDirection,
         FileListView,
         ImageView,
     }
