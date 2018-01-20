@@ -1,98 +1,15 @@
 import Vue from 'vue';
 import Component from 'vue-class-component';
-
-@Component({
-    props: ['tag', 'isActive', 'name', 'onClick'],
-    template: `
-        <td class="file"
-            v-bind:class="[tag, {active: isActive}]"
-            v-on:click="onClick">
-            {{ name }}
-        </td>`
-})
-class FileListItemView extends Vue {
-};
-
-@Component({
-    props: ['files'],
-    components: { FileListItemView },
-    template: `
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                </tr>
-            </thead>
-            <tbody id="files">
-                <tr v-for="file in files">
-                    <file-list-item-view
-                     v-bind:tag="file.info.type"
-                     v-bind:isActive="file.isActive"
-                     v-bind:name="file.info.name"
-                     v-bind:onClick="file.onClick"/>
-                    </file-list-item-view>
-                </tr>
-            </tbody>
-        </table>`
-})
-class FileListView extends Vue {
-};
-
-class FileListItem {
-    info: FileInfo;
-    isActive: boolean;
-    onClick: () => void;
-};
+import { Prop } from 'vue-property-decorator';
+import { FileListView, FileListItem } from './FileListView';
+import { ImageView } from './ImageView';
+import { ToolbarImagePanelMode, ToolbarImageDirection } from './Toolbar';
 
 interface FileInfo {
     name: string;
     path: string;
     url: string;
     type: string;
-}
-
-let vm = new Vue({
-    el: "#window",
-    data: {
-        header: "header",
-        footer: "footer",
-        files: new Array<FileListItem>(),
-        updateScroll: false
-    },
-    methods: {
-        setFiles: function (files: FileListItem[]) {
-            this.files = files;
-        },
-        updateFiles: function (updater: (FileListItem) => boolean) {
-            for (let i = 0; i < this.files.length; i++) {
-                let v = this.files[i];
-                if (updater(v)) {
-                    this.$set(this.files, i, v);
-                }
-            }
-        }
-    },
-    updated: function () {
-        if (this.updateScroll) {
-            this.updateScroll = false;
-            this.$nextTick(function () {
-                scrollActive();
-            });
-        }
-    },
-    components: {
-        FileListView,
-        FileListItemView
-    }
-});
-
-function scrollActive() {
-    let acts = document.getElementsByClassName("active");
-    if (acts.length == 0) {
-        return
-    }
-    let act = acts[0];
-    act.scrollIntoView();
 }
 
 class Index {
@@ -131,12 +48,30 @@ class Index {
             switch (ev.key) {
                 case "ArrowUp":
                     ev.preventDefault();
-                    this.selectPreviousImage();
+                    selectPreviousImage();
                     break;
 
                 case "ArrowDown":
                     ev.preventDefault();
-                    this.selectNextImage();
+                    selectNextImage();
+                    break;
+
+                case "ArrowLeft":
+                    ev.preventDefault();
+                    if (vm.isLeftToRight) {
+                        selectPreviousImage(true);
+                    } else {
+                        selectNextImage(true);
+                    }
+                    break;
+
+                case "ArrowRight":
+                    ev.preventDefault();
+                    if (vm.isLeftToRight) {
+                        selectNextImage(true);
+                    } else {
+                        selectPreviousImage(true);
+                    }
                     break;
             }
             return false;
@@ -145,142 +80,153 @@ class Index {
         // set event listener
         astilectron.onMessage((message: any) => {
             switch (message.name) {
-                case "load-image":
-                    const path = message.payload as string;
-                    this.loadImage(path);
-                    return;
-
                 case "set-current-files":
                     const files = message.payload as FileInfo[];
-                    this.setCurrentFiles(files);
+                    setCurrentFiles(files);
+                    return;
+
+                case "set-current-file-path":
+                    const path = message.payload as string;
+                    setCurrentFileName(path);
                     return;
             }
         });
     }
+};
 
-    loadImage(path: string) {
-        let img = document.getElementById("image") as HTMLImageElement;
-        img.src = path;
-    }
-
-    setCurrentFiles(files: FileInfo[]) {
-        let img = document.getElementById("image") as HTMLImageElement;
-        let current_url = img.src;
-        let filelists = new Array<FileListItem>();
-
-        for (let file of files) {
-            let e = new FileListItem();
-            e.info = file;
-
-            switch (file.type) {
-                case "image":
-                    e.onClick = () => {
-                        vm.updateFiles((f: FileListItem): boolean => {
-                            if (f.isActive) {
-                                f.isActive = false;
-                                return true;
-                            } else if (f.info.name === e.info.name) {
-                                f.isActive = true;
-                                return true;
-                            } else {
-                                return false;
-                            }
-                        });
-                        img.src = file.url;
-                        vm.updateScroll = true;
-                    }
-                    break;
-
-                case "arch":
-                    e.onClick = () => {
-                        const message = {
-                            name: "open-archive",
-                            payload: file.path,
-                        };
-                        astilectron.sendMessage(message);
-                    }
-                    break;
-
-                case "dir":
-                    e.onClick = () => {
-                        const message = {
-                            name: "change-directory",
-                            payload: file.path,
-                        };
-                        astilectron.sendMessage(message);
-                    }
-                    break;
+let vm = new Vue({
+    el: "#window",
+    data: {
+        files: new Array<FileListItem>(),
+        currentFileName: "",
+        isSinglePanel: false,
+        isLeftToRight: false,
+    },
+    computed: {
+        footer: function () {
+            return this.currentFileNameList.join(" / ");
+        },
+        currentFileNameList: function () {
+            let list = [this.currentFileName];
+            return appendNextFileNameIfNeed(list, this);
+        }
+    },
+    updated: function () {
+        this.$nextTick(function () {
+            let actives = document.getElementsByClassName("file active");
+            if (actives.length === 0) {
+                return;
             }
-
-            if (current_url == file.url) {
-                e.isActive = true;
-            }
-            filelists.push(e);
-        }
-
-        vm.setFiles(filelists);
-        vm.updateScroll = true;
+            actives[0].scrollIntoView();
+        });
+    },
+    components: {
+        ToolbarImagePanelMode,
+        ToolbarImageDirection,
+        FileListView,
+        ImageView,
     }
+});
 
-    selectPreviousImage() {
-        let acts = document.getElementsByClassName("active");
-        if (acts.length == 0) {
-            return;
-        }
-        let act = acts[0];
-
-        let images: HTMLElement[] = Array.prototype.slice.call(
-            document.getElementById("files").getElementsByClassName("image"));
-        let pre_image: HTMLElement = null;
-        for (let e of images) {
-            if (e === act) {
-                break;
-            }
-            pre_image = e;
-        }
-
-        if (pre_image === null) {
-            // use last image
-            pre_image = images[images.length - 1];
-        } else if (images[images.length - 1] === pre_image) {
-            // not found active element
-            console.log("Error: Not found active image element");
-            return;
-        }
-
-        pre_image.click();
-    }
-
-    selectNextImage() {
-        let acts = document.getElementsByClassName("active");
-        if (acts.length == 0) {
+function setCurrentFileName(path: string) {
+    for (let file of vm.files) {
+        if (file.path === path) {
+            vm.currentFileName = file.name;
             return
         }
-        let act = acts[0];
-
-        let images: HTMLElement[] = Array.prototype.slice.call(
-            document.getElementById("files").getElementsByClassName("image"));
-        let next_image: HTMLElement = null;
-        images.reverse();
-        for (let e of images) {
-            if (e === act) {
-                break;
-            }
-            next_image = e;
-        }
-        images.reverse();
-
-        if (next_image === null) {
-            // use first image
-            next_image = images[0];
-        } else if (images[0] === next_image) {
-            // not found active element
-            console.log("Error: Not found active image element");
-            return;
-        }
-
-        next_image.click();
     }
-};
+}
+
+function setCurrentFiles(infos: FileInfo[]) {
+    let files = new Array<FileListItem>();
+    for (let info of infos) {
+        let e = new FileListItem();
+        e.name = info.name;
+        e.path = info.path;
+        e.url = info.url;
+        e.type = info.type;
+        files.push(e);
+    }
+    vm.files = files;
+    vm.currentFileName = "";
+}
+
+function selectPreviousImage(isSinglePanel = vm.isSinglePanel) {
+    let files = vm.files.filter((val) => {
+        return val.type === "image";
+    });
+    if (files.length === 0) {
+        return;
+    }
+
+    let d = 1;
+    if (!isSinglePanel && files.length > 2) {
+        d = 2;
+    }
+
+    let index = files.findIndex((val) => {
+        return val.name === vm.currentFileName;
+    })
+    if (index < 0) {
+        return;
+    }
+
+    if (index - d < 0) {
+        index = files.length - 1 + d;
+    }
+    vm.currentFileName = files[index - d].name;
+}
+
+function selectNextImage(isSinglePanel = vm.isSinglePanel) {
+    let files = vm.files.filter((val) => {
+        return val.type === "image";
+    });
+    if (files.length === 0) {
+        return;
+    }
+
+    let d = 1;
+    if (!isSinglePanel && files.length > 2) {
+        d = 2;
+    }
+
+    let index = files.findIndex((val) => {
+        return val.name === vm.currentFileName;
+    })
+    if (index < 0) {
+        return;
+    }
+
+    if (index + d > files.length - 1) {
+        index = 0 - d;
+    }
+    vm.currentFileName = files[index + d].name;
+}
+
+function appendNextFileNameIfNeed(list: string[], v = vm) {
+    if (v.isSinglePanel) {
+        return list;
+    }
+
+    let files = v.files.filter((val) => {
+        return val.type === "image";
+    });
+    if (files.length < 2) {
+        return list;
+    }
+
+    let index = files.findIndex((val) => {
+        return val.name === list[0];
+    });
+    if (index < 0) {
+        return list;
+    }
+
+    if (index === files.length - 1) {
+        index = 0 - 1;
+    }
+    return list.concat([files[index + 1].name]);
+}
+
 
 let index = new Index();

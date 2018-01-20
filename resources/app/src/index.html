@@ -1,34 +1,46 @@
 <!doctype html>
 <html lang="ja">
-
-    <head>
-        <title>Hello, world!</title>
-        <meta charset="utf-8">
-        <link rel="stylesheet" href="static/lib/photon/css/photon.min.css">
-        <link rel="stylesheet" href="static/css/index.css">
-    </head>
-
-    <body>
-        <div id="window" class="window">
-            <header class="toolbar toolbar-header">
-                <h1 class="title">{{ header }}</h1>
-            </header>
-            <div class="window-content">
-                <div class="pane-group">
-                    <div class="pane pane-sm sidebar list-view">
-                        <file-list-view v-bind:files="files" />
-                        </file-list-view>
-                    </div>
-                    <div class="pane image-view">
-                        <img id="image"></img>
-                    </div>
+<head>
+    <title>Hello, world!</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet"
+          href="static/lib/photon/css/photon.min.css">
+    <link rel="stylesheet"
+          href="static/css/index.css">
+</head>
+<body>
+    <div id="window"
+         class="window">
+        <header class="toolbar toolbar-header">
+            <div class="toolbar-actions">
+                <toolbar-image-panel-mode class="pull-right"
+                                          :is-single-panel.sync="isSinglePanel">
+                </toolbar-image-panel-mode>
+                <toolbar-image-direction class="pull-right"
+                                         :is-left-to-right.sync="isLeftToRight">
+                </toolbar-image-direction>
+            </div>
+        </header>
+        <div class="window-content">
+            <div class="pane-group">
+                <div class="pane pane-sm sidebar list-view">
+                    <file-list-view :files="files"
+                                    :current-file-name.sync="currentFileName"
+                                    :current-file-name-list="currentFileNameList">
+                    </file-list-view>
+                </div>
+                <div class="pane image-view">
+                    <image-view :files="files"
+                                :current-file-name-list="currentFileNameList"
+                                :is-left-to-right="isLeftToRight">
+                    </image-view>
                 </div>
             </div>
-            <footer class="toolbar toolbar-footer">
-                <h1 class="title">{{ footer }}</h1>
-            </footer>
         </div>
-        <script src="static/js/index.js"></script>
-    </body>
-
+        <footer class="toolbar toolbar-footer">
+            <h1 class="title">{{ footer }}</h1>
+        </footer>
+    </div>
+    <script src="static/js/index.js"></script>
+</body>
 </html>

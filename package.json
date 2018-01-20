@@ -14,7 +14,8 @@
   "license": "MIT",
   "dependencies": {
     "vue": "^2.5.13",
-    "vue-class-component": "^6.1.2"
+    "vue-class-component": "^6.1.2",
+    "vue-property-decorator": "^6.0.0"
   },
   "devDependencies": {
     "awesome-typescript-loader": "^3.4.1",

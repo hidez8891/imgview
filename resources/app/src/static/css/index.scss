@@ -1,13 +1,40 @@
 .image-view {
     display: flex;
     justify-content: center;
-    #image {
+
+    div {
+        display: flex;
+        justify-content: center;
+    }
+
+    .reverse {
+        flex-direction: row-reverse;
+    }
+
+    .image {
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
+
+        &.multi {
+            max-width: 50%;
+        }
     }
 }
 
-.active {
-    background: cyan;
+.list-view {
+    .active {
+        background: cyan;
+    }
+    .icon {
+        &.image {
+            color: #1BA466;
+        }
+        &.arch {
+            color: #4B75B9;
+        }
+        &.dir {
+            color: #E06A3B;
+        }
+    }
 }
