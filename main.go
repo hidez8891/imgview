@@ -25,6 +25,7 @@ var (
 	port    = flag.Int("p", 4340, "server port")
 	wnd     *astilectron.Window
 	srv     *http.Server
+	modCache = make(map[string]module.ArchiveModule, 0)
 )
 
 func main() {
@@ -115,17 +116,25 @@ func imageHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// image file into archive
 		arch := paths[0]
-		modarch, err := module.GetArchiveModule(filepath.Ext(arch))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		if _, ok := modCache[arch]; !ok {
+			for _, m := range modCache {
+				m.Close()
+			}
+			modCache = make(map[string]module.ArchiveModule, 0)
 
-		if err := modarch.Open(arch); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			modarch, err := module.GetArchiveModule(filepath.Ext(arch))
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			if err := modarch.Open(arch); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			modCache[arch] = modarch
 		}
-		defer modarch.Close()
+		modarch := modCache[arch]
 
 		r, err := modarch.ReadFile(file)
 		if err != nil {
@@ -141,7 +150,7 @@ func imageHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := modimg.WriteResponseFromReader(w, r, info.Size()); err != nil {
-			astilog.Error(err.Error())
+			astilog.Warn(err.Error())
 		}
 	}
 }
