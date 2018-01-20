@@ -55,6 +55,24 @@ class Index {
                     ev.preventDefault();
                     selectNextImage();
                     break;
+
+                case "ArrowLeft":
+                    ev.preventDefault();
+                    if (vm.isLeftToRight) {
+                        selectPreviousImage(true);
+                    } else {
+                        selectNextImage(true);
+                    }
+                    break;
+
+                case "ArrowRight":
+                    ev.preventDefault();
+                    if (vm.isLeftToRight) {
+                        selectNextImage(true);
+                    } else {
+                        selectPreviousImage(true);
+                    }
+                    break;
             }
             return false;
         });
@@ -133,7 +151,7 @@ function setCurrentFiles(infos: FileInfo[]) {
     vm.currentFileName = "";
 }
 
-function selectPreviousImage() {
+function selectPreviousImage(isSinglePanel = vm.isSinglePanel) {
     let files = vm.files.filter((val) => {
         return val.type === "image";
     });
@@ -142,7 +160,7 @@ function selectPreviousImage() {
     }
 
     let d = 1;
-    if (!vm.isSinglePanel && files.length > 2) {
+    if (!isSinglePanel && files.length > 2) {
         d = 2;
     }
 
@@ -159,7 +177,7 @@ function selectPreviousImage() {
     vm.currentFileName = files[index - d].name;
 }
 
-function selectNextImage() {
+function selectNextImage(isSinglePanel = vm.isSinglePanel) {
     let files = vm.files.filter((val) => {
         return val.type === "image";
     });
@@ -168,7 +186,7 @@ function selectNextImage() {
     }
 
     let d = 1;
-    if (!vm.isSinglePanel && files.length > 2) {
+    if (!isSinglePanel && files.length > 2) {
         d = 2;
     }
 
